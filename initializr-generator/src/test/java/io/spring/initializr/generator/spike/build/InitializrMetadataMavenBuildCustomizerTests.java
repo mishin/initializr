@@ -25,7 +25,6 @@ import io.spring.initializr.generator.util.Version;
 import io.spring.initializr.generator.util.VersionProperty;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,19 +36,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class InitializrMetadataMavenBuildCustomizerTests {
 
-	private MavenBuild build;
-
-	@BeforeEach
-	void setup() {
-		this.build = new MavenBuild();
-	}
-
 	@Test
 	void customizeWhenNoParentShouldUseSpringBootParent() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.build();
-		customizeBuild(metadata);
-		MavenParent parent = this.build.getParent();
+		MavenBuild build = customizeBuild(metadata);
+		MavenParent parent = build.getParent();
 		assertThat(parent.getGroupId()).isEqualTo("org.springframework.boot");
 		assertThat(parent.getArtifactId()).isEqualTo("spring-boot-starter-parent");
 		assertThat(parent.getVersion()).isEqualTo("2.0.0");
@@ -59,15 +51,15 @@ public class InitializrMetadataMavenBuildCustomizerTests {
 	void customizeWithCustomParentAndSpringBootBomShouldAddBom() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.setMavenParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT", true).build();
-		customizeBuild(metadata);
-		MavenParent parent = this.build.getParent();
+		MavenBuild build = customizeBuild(metadata);
+		MavenParent parent = build.getParent();
 		assertThat(parent.getGroupId()).isEqualTo("com.foo");
 		assertThat(parent.getArtifactId()).isEqualTo("foo-parent");
 		assertThat(parent.getVersion()).isEqualTo("1.0.0-SNAPSHOT");
-		BomContainer boms = this.build.boms();
+		BomContainer boms = build.boms();
 		assertThat(boms.items()).hasSize(1);
 		assertThat(boms.ids()).contains("spring-boot");
-		assertThat(this.build.getVersionProperties()
+		assertThat(build.getVersionProperties()
 				.get(VersionProperty.of("spring-boot.version"))).isEqualTo("2.0.0");
 	}
 
@@ -75,19 +67,21 @@ public class InitializrMetadataMavenBuildCustomizerTests {
 	void customizeWithNoSpringBootBomShouldNotAddBom() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.setMavenParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT", false).build();
-		customizeBuild(metadata);
-		BomContainer boms = this.build.boms();
+		MavenBuild build = customizeBuild(metadata);
+		BomContainer boms = build.boms();
 		assertThat(boms.items()).hasSize(0);
 	}
 
-	private void customizeBuild(InitializrMetadata metadata) {
+	private MavenBuild customizeBuild(InitializrMetadata metadata) {
+		MavenBuild build = new MavenBuild();
 		ProjectDescription description = new ProjectDescription();
 		description.setPlatformVersion(Version.parse("2.0.0"));
 		ResolvedProjectDescription resolvedProjectDescription = new ResolvedProjectDescription(
 				description);
 		InitializrMetadataMavenBuildCustomizer customizer = new InitializrMetadataMavenBuildCustomizer(
 				resolvedProjectDescription, metadata);
-		customizer.customize(this.build);
+		customizer.customize(build);
+		return build;
 	}
 
 }
