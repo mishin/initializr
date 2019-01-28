@@ -128,8 +128,8 @@ public class ProjectGeneratorInvoker {
 				? new GradleBuildSystem() : new MavenBuildSystem());
 		description.setDescription(request.getDescription());
 		description.setGroupId(request.getGroupId());
-		description.setJavaVersion(request.getJavaVersion());
-		description.setLanguage(Language.forId(request.getLanguage()));
+		description.setLanguage(
+				Language.forId(request.getLanguage(), request.getJavaVersion()));
 		description.setName(request.getName());
 		description.setPackageName(request.getPackageName());
 		description.setPackaging(Packaging.forId(request.getPackaging()));
